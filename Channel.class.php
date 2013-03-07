@@ -185,6 +185,7 @@ class Channel extends BaeBase
 	const CERT = "cert"; 
 	const RELEASE_CERT = "release_cert";
 	const DEV_CERT = "dev_cert";
+	const PUSH_TYPE = 'push_type';
 	
 	/**
 	 * Channel私有变量
@@ -198,6 +199,11 @@ class Channel extends BaeBase
         CURLOPT_TIMEOUT => 30,
         CURLOPT_CONNECTTIMEOUT => 5
         );
+
+	const PUSH_TO_USER = 1;
+	const PUSH_TO_GROUP = 2;
+	const PUSH_TO_ALL = 3;
+	const PUSH_TO_DEVICE = 4;
 
 	/**
 	 * Channel 错误常量
@@ -557,6 +563,7 @@ class Channel extends BaeBase
 	 * 
 	 * @version 1.0.0.0
 	 */
+/*
 	public function pushMessageToUser ( $userId, $messages, $msgKeys, $optional = NULL ) 
 	{
 		$this->_resetErrorStatus (  );
@@ -593,7 +600,105 @@ class Channel extends BaeBase
 			return false; 
 		}
 	}
-   
+*/
+//=================== add
+	public function pushMessageToUser($userId, $messages, $msgKys, $optional = NULL)
+	{
+		$this->_resetErrorStatus();
+		try
+		{
+			$tmpArgs = func_get_args();
+			$arrArgs = $this->_mergeArgs ( array ( self::USER_ID, self::MESSAGES, self::MSG_KEYS ), $tmpArgs );
+			$arrArgs[self::METHOD] = 'pushmsg';
+			$arraArgs[self::PUSH_TYPE] = self::PUSH_TO_USER;
+			if(is_array($arrArgs [ self::MESSAGES ])) {
+				$arrArgs [ self::MESSAGES ] = json_encode($arrArgs [ self::MESSAGES ]);
+			}
+			if(is_array($arrArgs [ self::MSG_KEYS ])) {
+				$arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
+			}
+			return $this->_commonProcess ( $arrArgs );
+		} 
+		catch ( Exception $ex ) 
+		{
+			$this->_channelExceptionHandler ( $ex );
+			return false; 
+		}
+	}
+
+	public function pushMessageToGroup($groupId, $messages, $optional = NULL)
+	{
+		$this->_resetErrorStatus();
+		try
+		{
+			$tmpArgs = func_get_args();
+			$arrArgs = $this->_mergeArgs ( array ( self::GROUP_ID, self::MESSAGES), $tmpArgs );
+			$arrArgs[self::METHOD] = 'pushmsg';
+			$arrArgs[self::PUSH_TYPE] = self::PUSH_TO_GROUP;
+			if(is_array($arrArgs [ self::MESSAGES ])) {
+				$arrArgs [ self::MESSAGES ] = json_encode($arrArgs [ self::MESSAGES ]);
+			}
+			if(is_array($arrArgs [ self::MSG_KEYS ])) {
+				$arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
+			}
+			return $this->_commonProcess ( $arrArgs );
+		} 
+		catch ( Exception $ex ) 
+		{
+			$this->_channelExceptionHandler ( $ex );
+			return false; 
+		}
+	}
+  
+	public function pushMessageToAll($messages, $optional = NULL)
+	{
+		$this->_resetErrorStatus();
+		try
+		{
+			$tmpArgs = func_get_args();
+			$arrArgs = $this->_mergeArgs ( array ( self::MESSAGES ), $tmpArgs );
+			$arrArgs[self::METHOD] = 'pushmsg';
+			$arrArgs[self::PUSH_TYPE] = self::PUSH_TO_ALL;
+			if(is_array($arrArgs [ self::MESSAGES ])) {
+				$arrArgs [ self::MESSAGES ] = json_encode($arrArgs [ self::MESSAGES ]);
+			}
+			if(is_array($arrArgs [ self::MSG_KEYS ])) {
+				$arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
+			}
+			return $this->_commonProcess ( $arrArgs );
+		} 
+		catch ( Exception $ex ) 
+		{
+			$this->_channelExceptionHandler ( $ex );
+			return false; 
+		}
+ 	}
+
+	public function pushMessageToDevice($channel_id, $messages, $optional = NULL)
+	{
+		$this->_resetErrorStatus();
+		try
+		{
+			$tmpArgs = func_get_args();
+			$arrArgs = $this->_mergeArgs ( array ( self::CHANNEL_ID, self::MESSAGES), $tmpArgs );
+			$arrArgs[self::METHOD] = 'pushmsg';
+			$arrArgs[self::PUSH_TYPE] = self::PUSH_TO_DEVICE;
+			if(is_array($arrArgs [ self::MESSAGES ])) {
+				$arrArgs [ self::MESSAGES ] = json_encode($arrArgs [ self::MESSAGES ]);
+			}
+			if(is_array($arrArgs [ self::MSG_KEYS ])) {
+				$arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
+			}
+			return $this->_commonProcess ( $arrArgs );
+		} 
+		catch ( Exception $ex ) 
+		{
+			$this->_channelExceptionHandler ( $ex );
+			return false; 
+		}
+	}
+
+
 	/**
 	 * pushIosMessage
 	 * 
