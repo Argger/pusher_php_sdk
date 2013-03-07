@@ -191,8 +191,7 @@ class Channel extends BaeBase
 	 * 
 	 * 用户关注：否
 	 */
-//	protected $_accessToken = NULL;
-	protected $_apiKey = NULL;
+	protected $_accessKey = NULL;
 	protected $_secretKey = NULL;
 	protected $_requestId = 0;
 	protected $_curlOpts = array(
@@ -226,18 +225,30 @@ class Channel extends BaeBase
 		 self::CHANNEL_SDK_HTTP_STATUS_OK_BUT_RESULT_ERROR => 'http status is ok, but the body returned is not a json string',
 		);
 	
-	public function setAccessToken ( $accessToken )
+	/**
+	 * setAccessKey
+	 * 
+	 * 用户关注：是
+	 * 服务类方法， 设置Channel对象的accessKey属性，如果用户在创建Channel对象时已经通过参数设置了accessKey，这里的设置将会覆盖以前的设置
+	 * 
+	 * @access public
+	 * @param string $accessKey
+	 * @return 成功：true，失败：false
+	 * 
+	 * @version 
+	 */
+	public function setAccessKey ( $accessKey )
 	{
 		$this->_resetErrorStatus (  );
 		try
 		{
-			if ( $this->_checkString ( $accessToken, 1, 256 ) )
+			if ( $this->_checkString ( $accessKey, 1, 64 ) )
 			{
-				$this->_accessToken = $accessToken;
+				$this->_accessKey = $accessKey;
 			}
 			else 
 			{
-				throw new ChannelException ( "invaid accessToken ( ${accessToken} ), which must be a 1 - 256 length string", self::CHANNEL_SDK_INIT_FAIL );
+				throw new ChannelException ( "invaid accessKey ( ${accessKey} ), which must be a 1 - 64 length string", self::CHANNEL_SDK_INIT_FAIL );
 			}
 		}
 		catch ( Exception $ex )
@@ -247,6 +258,41 @@ class Channel extends BaeBase
 		}
 		return true;
 	}
+
+	/**
+	 * setSecretKey
+	 * 
+	 * 用户关注：是
+	 * 服务类方法， 设置Channel对象的secretKey属性，如果用户在创建Channel对象时已经通过参数设置了secretKey，这里的设置将会覆盖以前的设置
+	 * 
+	 * @access public
+	 * @param string $secretKey
+	 * @return 成功：true，失败：false
+	 * 
+	 * @version 
+	 */
+	public function setSecretKey ( $secretKey )
+	{
+		$this->_resetErrorStatus (  );
+		try
+		{
+			if ( $this->_checkString ( $secretKey, 1, 64 ) )
+			{
+				$this->_secretKey = $secretKey;
+			}
+			else 
+			{
+				throw new ChannelException ( "invaid secretKey ( ${secretKey} ), which must be a 1 - 64 length string", self::CHANNEL_SDK_INIT_FAIL );
+			}
+		}
+		catch ( Exception $ex )
+		{
+			$this->_channelExceptionHandler ( $ex );
+			return false; 
+		}
+		return true;
+	}
+	
 	
 	/**
 	 * setCurlOpts
@@ -318,7 +364,7 @@ class Channel extends BaeBase
 			$tmpArgs = func_get_args (  );
 			$arrArgs = $this->_mergeArgs ( array ( self::USER_ID ), $tmpArgs );
 			$arrArgs [ self::METHOD ] = 'query_bindlist';
-			return $this->_commonProcess ( $arrArgs, array ( self::USER_ID ) );
+			return $this->_commonProcess ( $arrArgs );
 		} 
 		catch ( Exception $ex ) 
 		{
@@ -349,7 +395,7 @@ class Channel extends BaeBase
 			$tmpArgs = func_get_args (  );
 			$arrArgs = $this->_mergeArgs ( array ( self::USER_ID ), $tmpArgs );
 			$arrArgs [ self::METHOD ] = 'verify_bind';
-			return $this->_commonProcess ( $arrArgs, array ( self::USER_ID ) );
+			return $this->_commonProcess ( $arrArgs );
 		} 
 		catch ( Exception $ex ) 
 		{
@@ -380,7 +426,7 @@ class Channel extends BaeBase
 			$tmpArgs = func_get_args (  );
 			$arrArgs = $this->_mergeArgs ( array ( self::USER_ID ), $tmpArgs );
 			$arrArgs [ self::METHOD ] = 'fetch_msg';
-			return $this->_commonProcess ( $arrArgs, array ( self::USER_ID ) );
+			return $this->_commonProcess ( $arrArgs );
 		} 
 		catch ( Exception $ex ) 
 		{
@@ -411,7 +457,7 @@ class Channel extends BaeBase
 			$tmpArgs = func_get_args (  );
 			$arrArgs = $this->_mergeArgs ( array ( self::USER_ID ), $tmpArgs );
 			$arrArgs [ self::METHOD ] = 'fetch_msgcount';
-			return $this->_commonProcess ( $arrArgs, array ( self::USER_ID ) );
+			return $this->_commonProcess ( $arrArgs );
 		} 
 		catch ( Exception $ex ) 
 		{
@@ -446,7 +492,7 @@ class Channel extends BaeBase
 			if(is_array($arrArgs [ self::MSG_IDS ])) {
 				$arrArgs [ self::MSG_IDS ] = json_encode($arrArgs [ self::MSG_IDS ]);
 			}
-			return $this->_commonProcess ( $arrArgs, array ( self::USER_ID, self::MSG_IDS ) );
+			return $this->_commonProcess ( $arrArgs );
 		} 
 		catch ( Exception $ex ) 
 		{
@@ -486,7 +532,7 @@ class Channel extends BaeBase
 			if(is_array($arrArgs [ self::MSG_KEYS ])) {
 				$arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
 			}
-			return $this->_commonProcess ( $arrArgs, array ( self::USER_ID, self::CHANNEL_ID, self::MESSAGES, self::MSG_KEYS ) );
+			return $this->_commonProcess ( $arrArgs );
 		} 
 		catch ( Exception $ex ) 
 		{
@@ -539,7 +585,7 @@ class Channel extends BaeBase
 				}
 				$arrArgs [ self::WP_MESSAGES ] = json_encode($msgs);
 			}
-			return $this->_commonProcess ( $arrArgs, array ( self::USER_ID, self::MESSAGES, self::MSG_KEYS ) );
+			return $this->_commonProcess ( $arrArgs );
 		} 
 		catch ( Exception $ex ) 
 		{
@@ -581,7 +627,7 @@ class Channel extends BaeBase
 				}
 				$arrArgs [ self::MESSAGES ] = json_encode($msgs);
 			}
-			return $this->_commonProcess ( $arrArgs, array ( self::USER_ID, self::CHANNEL_ID, self::MESSAGES ) );
+			return $this->_commonProcess ( $arrArgs );
 		} 
 		catch ( Exception $ex ) 
 		{
@@ -622,7 +668,7 @@ class Channel extends BaeBase
 				}
 				$arrArgs [ self::MESSAGES ] = json_encode($msgs);
 			}
-			return $this->_commonProcess ( $arrArgs, array ( self::USER_ID, self::CHANNEL_ID, self::MESSAGES ) );
+			return $this->_commonProcess ( $arrArgs );
 		} 
 		catch ( Exception $ex ) 
 		{
@@ -650,7 +696,7 @@ class Channel extends BaeBase
             $tmpArgs = func_get_args();
             $arrArgs = $this->_mergeArgs(array(self::GROUP_NAME), $tmpArgs);
             $arrArgs[self::METHOD] = 'create_group';
-            return $this->_commonProcess($arrArgs, array(self::GROUP_NAME));
+            return $this->_commonProcess($arrArgs);
         } catch (Exception $ex) {
             $this->_channelExceptionHandler($ex);
             return false;
@@ -673,7 +719,7 @@ class Channel extends BaeBase
             $tmpArgs = func_get_args();
             $arrArgs = $this->_mergeArgs(array(self::GROUP_ID), $tmpArgs);
             $arrArgs[self::METHOD] = 'query_group';
-            return $this->_commonProcess($arrArgs, array(self::GROUP_ID));
+            return $this->_commonProcess($arrArgs);
         } catch (Exception $ex) {
             $this->_channelExceptionHandler($ex);
             return false;
@@ -696,7 +742,7 @@ class Channel extends BaeBase
             $tmpArgs = func_get_args();
             $arrArgs = $this->_mergeArgs(array(self::GROUP_ID), $tmpArgs);
             $arrArgs[self::METHOD] = 'destroy_group';
-            return $this->_commonProcess($arrArgs, array(self::GROUP_ID));
+            return $this->_commonProcess($arrArgs);
         } catch (Exception $ex) {
             $this->_channelExceptionHandler($ex);
             return false;
@@ -719,7 +765,7 @@ class Channel extends BaeBase
             $tmpArgs = func_get_args();
             $arrArgs = $this->_mergeArgs(array(self::USER_ID), $tmpArgs);
             $arrArgs[self::METHOD] = 'query_user_group';
-            return $this->_commonProcess($arrArgs, array(self::USER_ID));
+            return $this->_commonProcess($arrArgs);
         } catch (Exception $ex) {
             $this->_channelExceptionHandler($ex);
             return false;
@@ -749,7 +795,7 @@ class Channel extends BaeBase
 			if(is_array($arrArgs [ self::MSG_KEYS ])) {
 				$arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
 			}
-            return $this->_commonProcess($arrArgs, array(self::MESSAGES, self::MSG_KEYS, self::DEVICE_TYPE));
+            return $this->_commonProcess($arrArgs);
         } catch (Exception $ex) {
             $this->_channelExceptionHandler($ex);
             return false;
@@ -771,7 +817,7 @@ class Channel extends BaeBase
             $tmpArgs = func_get_args();
             $arrArgs = $this->_mergeArgs(array(), $tmpArgs);
             $arrArgs[self::METHOD] = 'fetch_group_msg';
-            return $this->_commonProcess($arrArgs, array());
+            return $this->_commonProcess($arrArgs);
         } catch (Exception $ex) {
             $this->_channelExceptionHandler($ex);
             return false;
@@ -793,7 +839,7 @@ class Channel extends BaeBase
             $tmpArgs = func_get_args();
             $arrArgs = $this->_mergeArgs(array(), $tmpArgs);
             $arrArgs[self::METHOD] = 'fetch_group_msgcount';
-            return $this->_commonProcess($arrArgs, array());
+            return $this->_commonProcess($arrArgs);
         } catch (Exception $ex) {
             $this->_channelExceptionHandler($ex);
             return false;
@@ -819,7 +865,7 @@ class Channel extends BaeBase
         	if(is_array($arrArgs [ self::MSG_IDS ])) {
 				$arrArgs [ self::MSG_IDS ] = json_encode($arrArgs [ self::MSG_IDS ]);
 			}
-            return $this->_commonProcess($arrArgs, array(self::MSG_IDS));
+            return $this->_commonProcess($arrArgs);
         } catch (Exception $ex) {
             $this->_channelExceptionHandler($ex);
             return false;
@@ -845,7 +891,7 @@ class Channel extends BaeBase
 			$tmpArgs = func_get_args();
 			$arrArgs = $this->_mergeArgs(array(self::NAME, self::DESCRIPTION, self::RELEASE_CERT, self::DEV_CERT), $tmpArgs);
 			$arrArgs[self::METHOD] = "init_app_ioscert";
-			return $this->_commonProcess($arrArgs, array(self::NAME, self::DESCRIPTION, self::RELEASE_CERT, self::DEV_CERT));
+			return $this->_commonProcess($arrArgs);
 		} catch(Exception $ex) {
 			$this->_channelExceptionHandler($ex);
 			return false;
@@ -867,7 +913,7 @@ class Channel extends BaeBase
 			$tmpArgs = func_get_args();
 			$arrArgs = $this->_mergeArgs(array(), $tmpArgs);
 			$arrArgs[self::METHOD] = "update_app_ioscert";
-			return $this->_commonProcess($arrArgs, array());	
+			return $this->_commonProcess($arrArgs);	
 		} catch(Exception $ex) {
 			$this->_channelExceptionHandler($ex);
 			return false;
@@ -889,7 +935,7 @@ class Channel extends BaeBase
 			$tmpArgs = func_get_args();
 			$arrArgs = $this->_mergeArgs(array(), $tmpArgs);
 			$arrArgs[self::METHOD] = "query_app_ioscert";	
-			return $this->_commonProcess($arrArgs, array()); 
+			return $this->_commonProcess($arrArgs); 
 		} catch(Exception $ex) {
 			$this->_channelExceptionHandler($ex);
 			return false;
@@ -911,7 +957,7 @@ class Channel extends BaeBase
 			$tmpArgs = func_get_args();
 			$arrArgs = $this->_mergeArgs(array(), $tmpArgs);
 			$arrArgs[self::METHOD] = "destroy_app_ioscert";
-			return $this->_commonProcess($arrArgs, array());
+			return $this->_commonProcess($arrArgs);
 		} catch(Exception $ex) {
 			$this->_channelExceptionHandler($ex);
 			return false;
@@ -949,7 +995,7 @@ class Channel extends BaeBase
 			if(is_array($arrArgs [ self::MSG_KEYS ])) {
 				$arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
 			}
-			return $this->_commonProcess ( $arrArgs, array ( self::USER_ID, self::CHANNEL_ID, self::MESSAGES, self::MSG_KEYS ) );
+			return $this->_commonProcess ( $arrArgs );
 		} 
 		catch ( Exception $ex ) 
 		{
@@ -989,7 +1035,7 @@ class Channel extends BaeBase
 			if(is_array($arrArgs [ self::MSG_KEYS ])) {
 				$arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
 			}
-			return $this->_commonProcess ( $arrArgs, array ( self::USER_ID, self::CHANNEL_ID, self::MESSAGES, self::MSG_KEYS ) );
+			return $this->_commonProcess ( $arrArgs );
 		} 
 		catch ( Exception $ex ) 
 		{
@@ -1029,7 +1075,7 @@ class Channel extends BaeBase
 			if(is_array($arrArgs [ self::MSG_KEYS ])) {
 				$arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
 			}
-			return $this->_commonProcess ( $arrArgs, array ( self::USER_ID, self::CHANNEL_ID, self::MESSAGES, self::MSG_KEYS ) );
+			return $this->_commonProcess ( $arrArgs );
 		} 
 		catch ( Exception $ex ) 
 		{
@@ -1059,7 +1105,7 @@ class Channel extends BaeBase
 			$tmpArgs = func_get_args (  );
 			$arrArgs = $this->_mergeArgs ( array ( self::CHANNEL_ID ), $tmpArgs );
 			$arrArgs [ self::METHOD ] = 'query_device_type';
-			return $this->_commonProcess ( $arrArgs, array ( self::CHANNEL_ID ) );
+			return $this->_commonProcess ( $arrArgs );
 		} 
 		catch ( Exception $ex ) 
 		{
@@ -1068,51 +1114,9 @@ class Channel extends BaeBase
 		}
 	}
 
-	/**
-	 * __construct
-	 *  
-	 * 用户关注：是
-	 * 
-	 * 对象构造方法，用户可以传入$accessToken进行初始化
-	 * 如果用户没有传入$accessToken，这三个参数可以其他几个地方予以设置，如下：
-	 * 1. 在调用SDK时，在$optional参数中设置，如$optional[self::ACCESS_TOKEN] = 'my_access_token'，影响范围：本次SDK调用
-	 * 2. 调用SDK对象的setXXX系列函数进行设置，如$Channel->setAccessToken('my_access_token')，影响范围：自设置之后起的每次SDK调用
-	 * 3. 全局变量，如g_accessToken = 'my_access_token'，影响范围：当1、2均无法获取到$accessToken时，会从全局变量中获取
-	 * 说明：SDK获取$accessToken的优先级是：
-	 * 1. SDK的$optional参数
-	 * 2. Channel对象的属性（通过初始化参数或setXXX系列函数指定）
-	 * 3. 全局变量
-	 * 
-	 * @access public
-	 * @param string $accessToken
-	 * @throws ChannelException 如果出错，则抛出异常，异常号是self::CHANNEL_SDK_INIT_FAIL
-	 * 
-	 * @version 1.0.0.0
-	 */
-/*
-	public function __construct ($accessToken = NULL, $arr_curlOpts = array()) 
-	{
-		if (is_null($accessToken) || $this->_checkString($accessToken, 1, 256)) {
-			$this->_accessToken = $accessToken;
-		} else {
-			throw new ChannelException("invalid param - access_token[$accessToken],"
-                    . "which must be a 1 - 256 length string",
-                    self::CHANNEL_SDK_INIT_FAIL );
-		}
-		
-		if (!is_array($arr_curlOpts)) {
-			throw new ChannelException('invalid param - arr_curlopt is not an array ['
-                    . print_r($arr_curlOpts, true) . ']',
-                    self::CHANNEL_SDK_INIT_FAIL);
-		}
-        $this->_curlOpts = array_merge($this->_curlOpts, $arr_curlOpts);
-        
-		$this->_resetErrorStatus();
-	}
-*/
-	public function __construct ($apiKey = NULL, $secretKey = NULL, $arr_curlOpts = array())
+	public function __construct ($accessKey = NULL, $secretKey = NULL, $arr_curlOpts = array())
     {
-        $this->_apiKey = $apiKey;
+        $this->_accessKey = $accessKey;
 		$this->_secretKey = $secretkey;
 
         if (!is_array($arr_curlOpts)) {
@@ -1150,80 +1154,6 @@ class Channel extends BaeBase
 	}
 
 	/**
-	 * _getKey
-	 * 
-	 * 用户关注：否
-	 * 获取AK/SK/TOKEN/HOST的统一过程函数
-	 * 
-	 * @access protected
-	 * @param array $opt 参数数组
-	 * @param string $opt_key 参数数组的key
-	 * @param string $member 对象成员
-	 * @param string $g_key 全局变量的名字
-	 * @param string $env_key 环境变量的名字
-	 * @param int $min 字符串最短值
-	 * @param int $max 字符串最长值
-	 * @throws ChannelException 如果出错，则抛出ChannelException异常，异常类型为self::CHANNEL_SDK_PARAM
-	 * 
-	 * @version 1.0.0.0
-	 */
-/*
-	protected function _getKey(&$opt,
-            $opt_key,
-            $member,
-            $g_key,
-            $env_key,
-            $min,
-            $max,
-            $throw = true)
-	{
-		$dis = array(
-            'access_token' => 'access_token',
-            );
-		global $$g_key;
-		if (isset($opt[$opt_key])) {
-			if (!$this->_checkString($opt[$opt_key], $min, $max)) {
-				throw new ChannelException ( 'invalid ' . $dis[$opt_key] . ' in $optinal ('
-                        . $opt[$opt_key] . '), which must be a ' . $min . '-' . $max
-                        . ' length string', self::CHANNEL_SDK_PARAM );
-			}
-			return;
-		}
-		if ($this->_checkString($member, $min, $max)) {
-			$opt[$opt_key] = $member;
-			return;
-		}
-		if (isset($$g_key)) {
-			if (!$this->_checkString($$g_key, $min, $max)) {
-				throw new ChannelException('invalid ' . $g_key . ' in global area ('
-                        . $$g_key . '), which must be a ' . $min . '-' . $max
-                        . ' length string', self::CHANNEL_SDK_PARAM);
-			}
-			$opt[$opt_key] = $$g_key;
-			return;
-		}
-		
-		if (false !== getenv($env_key)) {
-			if (!$this->_checkString(getenv($env_key), $min, $max)) {
-				throw new ChannelException( 'invalid ' . $env_key . ' in environment variable ('
-                        . getenv($env_key) . '), which must be a ' . $min . '-' . $max
-                        . ' length string', self::CHANNEL_SDK_PARAM);
-			}
-			$opt[$opt_key] = getenv($env_key) ;
-			return;
-		}
-		
-		if ($opt_key === self::HOST) {   
-            $opt[$opt_key] = self::DEFAULT_HOST;
-			return;
-        }
-		if ($throw) {
-			throw new ChannelException('no param (' . $dis[$opt_key] . ') was found',
-                    self::CHANNEL_SDK_PARAM);
-		}
-	}
-*/
-	/**
 	 * _adjustOpt
 	 *   
 	 * 用户关注：否
@@ -1246,68 +1176,13 @@ class Channel extends BaeBase
 		}
 		
 		$opt[self::HOST] = self::DEFAULT_HOST; 
-		$opt[self::ACCESS_KEY] = $this->_apiKey;
+		$opt[self::ACCESS_KEY] = $this->_accessKey;
         
 		if (isset($opt[self::SECRET_KEY])) {
 			unset($opt[self::SECRET_KEY]);
 		}
 	}
 
-	/**
-	 * _channelServerGetSign
-	 *   
-	 * 用户关注：否
-	 * 
-	 * 签名方法
-	 * 
-	 * @access protected
-	 * @param array $opt 参数数组
-	 * @param array $arrContent 可以加入签名的参数数组，返回值
-	 * @param array $arrNeed 必须的参数
-	 * @throws ChannelException 如果出错，则抛出异常，异常号为self::CHANNEL_SDK_PARAM
-	 * 
-	 * @version 1.0.0.0
-	 */
-/*
-	protected function _channelServerGetSign(&$opt, &$arrContent, $arrNeed = array())
-    {
-		$arrData = array();
-		$arrContent = array();
-        
-		$arrNeed[] = self::TIMESTAMP;
-		$arrNeed[] = self::METHOD;
-		$arrNeed[] = self::ACCESS_TOKEN;
-		if (isset($opt[self::EXPIRES])) {
-			$arrNeed[] = self::EXPIRES;
-		}
-		if (isset($opt[self::VERSION])) {
-			$arrNeed[] = self::VERSION;
-		}
-        
-		$arrExclude = array(self::CHANNEL_ID, self::HOST, self::SECRET_KEY);
-		foreach ($arrNeed as $key) {
-			if (!isset($opt[$key]) || (!is_integer($opt[$key]) && empty($opt[$key]))) {
-				throw new ChannelException ("lack param (${key})",
-                        self::CHANNEL_SDK_PARAM );
-			}
-			if (in_array($key, $arrExclude)) {
-				continue;
-			}
-			$arrData[$key] = $opt[$key];
-			$arrContent[$key] = $opt [$key];
-		}
-		foreach ($opt as $key => $value) {
-			if (!in_array($key, $arrNeed) && !in_array($key, $arrExclude)) {
-				$arrData[$key] = $value;
-				$arrContent[$key] = $value;
-			}
-		}
-		if (isset($opt[self::CHANNEL_ID]) && !is_null($opt[self::CHANNEL_ID])) {
-			$arrContent[self::CHANNEL_ID] = $opt[self::CHANNEL_ID];
-		}
-		$arrContent[self::HOST] = $opt[self::HOST];
-	}
-*/
 	/**
 	 * _genSign
 	 *
@@ -1429,11 +1304,9 @@ class Channel extends BaeBase
 	 * 
 	 * @version 1.0.0.0
 	 */
-	protected function _commonProcess($paramOpt = NULL, $arrNeed = array())
+	protected function _commonProcess($paramOpt = NULL)
 	{
 		$this->_adjustOpt($paramOpt);
-		//$arrContent = array();
-		//$this->_channelServerGetSign($paramOpt, $arrContent, $arrNeed);
 		$ret = $this->_baseControl($paramOpt);
 		if (empty($ret)) {
 			throw new ChannelException('base control returned empty object',
