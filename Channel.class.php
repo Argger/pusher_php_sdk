@@ -602,15 +602,15 @@ class Channel extends BaeBase
 	}
 */
 //=================== add
-	public function pushMessageToUser($userId, $messages, $msgKys, $optional = NULL)
+	public function pushMessageToUser($userId, $messages, $optional = NULL)
 	{
 		$this->_resetErrorStatus();
 		try
 		{
 			$tmpArgs = func_get_args();
-			$arrArgs = $this->_mergeArgs ( array ( self::USER_ID, self::MESSAGES, self::MSG_KEYS ), $tmpArgs );
+			$arrArgs = $this->_mergeArgs ( array ( self::USER_ID, self::MESSAGES), $tmpArgs );
 			$arrArgs[self::METHOD] = 'pushmsg';
-			$arraArgs[self::PUSH_TYPE] = self::PUSH_TO_USER;
+			$arrArgs[self::PUSH_TYPE] = self::PUSH_TO_USER;
 			if(is_array($arrArgs [ self::MESSAGES ])) {
 				$arrArgs [ self::MESSAGES ] = json_encode($arrArgs [ self::MESSAGES ]);
 			}
