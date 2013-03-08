@@ -170,8 +170,8 @@ class Channel extends BaeBase
 	 */
 	const APPID = 'appid';
 	const ACCESS_TOKEN = 'access_token';
-	const ACCESS_KEY = 'client_id';
-	const SECRET_KEY = 'client_secret';
+	const ACCESS_KEY = 'access_key';
+	const SECRET_KEY = 'secret_key';
 	const SIGN = 'sign';
 	const METHOD = 'method';
 	const HOST = 'host';
@@ -1258,6 +1258,79 @@ class Channel extends BaeBase
 		return false;
 	}
 
+    /**
+     * _getKey
+     * 
+     * 用户关注：否
+     * 获取AK/SK/TOKEN/HOST的统一过程函数
+     * 
+     * @access protected
+     * @param array $opt 参数数组
+     * @param string $opt_key 参数数组的key
+     * @param string $member 对象成员
+     * @param string $g_key 全局变量的名字
+     * @param string $env_key 环境变量的名字
+     * @param int $min 字符串最短值
+     * @param int $max 字符串最长值
+     * @throws ChannelException 如果出错，则抛出ChannelException异常，异常类型为self::CHANNEL_SDK_PARAM
+     * 
+     * @version 1.0.0.0
+     */
+	protected function _getKey(&$opt,
+            $opt_key,
+            $member,
+            $g_key,
+            $env_key,
+            $min,
+            $max,
+            $throw = true)
+    {
+        $dis = array(
+            'access_token' => 'access_token',
+            );
+        global $$g_key;
+        if (isset($opt[$opt_key])) {
+            if (!$this->_checkString($opt[$opt_key], $min, $max)) {
+                throw new ChannelException ( 'invalid ' . $dis[$opt_key] . ' in $optinal ('
+                        . $opt[$opt_key] . '), which must be a ' . $min . '-' . $max
+                        . ' length string', self::CHANNEL_SDK_PARAM );
+            }
+            return;
+        }
+        if ($this->_checkString($member, $min, $max)) {
+            $opt[$opt_key] = $member;
+            return;
+        }
+        if (isset($$g_key)) {
+            if (!$this->_checkString($$g_key, $min, $max)) {
+                throw new ChannelException('invalid ' . $g_key . ' in global area ('
+                        . $$g_key . '), which must be a ' . $min . '-' . $max
+                        . ' length string', self::CHANNEL_SDK_PARAM);
+            }
+            $opt[$opt_key] = $$g_key;
+            return;
+        }
+
+        if (false !== getenv($env_key)) {
+            if (!$this->_checkString(getenv($env_key), $min, $max)) {
+                throw new ChannelException( 'invalid ' . $env_key . ' in environment variable ('
+                        . getenv($env_key) . '), which must be a ' . $min . '-' . $max
+                        . ' length string', self::CHANNEL_SDK_PARAM);
+            }
+            $opt[$opt_key] = getenv($env_key) ;
+            return;
+        }
+
+        if ($opt_key === self::HOST) {
+            $opt[$opt_key] = self::DEFAULT_HOST;
+            return;
+        }
+        if ($throw) {
+            throw new ChannelException('no param (' . $dis[$opt_key] . ') was found',
+                    self::CHANNEL_SDK_PARAM);
+        }
+    }
+
 	/**
 	 * _adjustOpt
 	 *   
@@ -1279,9 +1352,13 @@ class Channel extends BaeBase
 		if (!isset($opt[self::TIMESTAMP])) {
 			$opt[self::TIMESTAMP] = time();
 		}
-		
-		$opt[self::HOST] = self::DEFAULT_HOST; 
-		$opt[self::ACCESS_KEY] = $this->_accessKey;
+		$this->_getKey($opt, self::HOST, null, 'g_host',
+                'HTTP_BAE_ENV_ADDR_CHANNEL', 1, 1024);
+
+        $this->_getKey($opt, self::ACCESS_KEY, $this->_accessKey,
+                'g_accessKey', 'HTTP_BAE_ENV_AK', 1, 64, false);	
+		//$opt[self::HOST] = self::DEFAULT_HOST; 
+		//$opt[self::ACCESS_KEY] = $this->_accessKey;
         
 		if (isset($opt[self::SECRET_KEY])) {
 			unset($opt[self::SECRET_KEY]);
@@ -1297,7 +1374,12 @@ class Channel extends BaeBase
 	*/
 	protected function _genSign($method, $url, $arrContent)
 	{
-    	$secret_key = $this->_secretKey;
+    	//$secret_key = $this->_secretKey;
+		$opt = array();
+		$this->_getKey($opt, self::SECRET_KEY, $this->_secretKey,
+                'g_secretKey', 'HTTP_BAE_ENV_SK', 1, 64, false);
+		$secret_key = $opt[self::SECRET_KEY];
+
     	$gather = $method.$url;
     	ksort($arrContent);
     	foreach($arrContent as $key => $value)
