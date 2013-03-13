@@ -1418,7 +1418,7 @@ class Channel extends BaeBase
 		$url = 'http://' . $host . '/rest/2.0/' . self::PRODUCT . '/';
 		$url .= $resource;
 		$http_method = 'POST';
-		$opt[self::SIGN] = $this->_genSign($$http_method, $url, $opt);
+		$opt[self::SIGN] = $this->_genSign($http_method, $url, $opt);
 		
 		foreach ($opt as $k => $v) {
 			$k = urlencode($k);
