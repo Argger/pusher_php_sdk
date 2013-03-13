@@ -1415,7 +1415,6 @@ class Channel extends BaeBase
 		$host = $opt[self::HOST];
 		unset($opt[self::HOST]);
 		
-		$content = substr($content, 0, strlen($content) - 1);
 		$url = 'http://' . $host . '/rest/2.0/' . self::PRODUCT . '/';
 		$url .= $resource;
 		$http_method = 'POST';
