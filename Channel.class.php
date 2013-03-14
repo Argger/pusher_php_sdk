@@ -122,21 +122,21 @@ class Channel extends BaeBase
 	const MESSAGE_EXPIRES = 'message_expires';
     
     /**
-     * 消息广播组名称
+     * 消息标签名称
      * 
      * @var string TAG_NAME
      */
     const TAG_NAME = 'name';
     
     /**
-     * 消息广播组描述
+     * 消息标签描述
      * 
      * @var stirng TAG_INFO
      */
     const TAG_INFO = 'info';
     
     /**
-     * 消息广播组id
+     * 消息标签id
      * 
      * @var int TAG_ID
      */
@@ -515,23 +515,23 @@ class Channel extends BaeBase
 	 * @access public
 	 * @param int $pushType 推送类型 取值范围 1-4, 1:单人，2：一群人tag， 3：所有人， 4：设备
 	 * @param string $messages 要发送的消息，如果是数组格式，则会自动做json_encode;如果是json格式给出，必须与$msgIds对应起来;
-	 * @param int $message_type 消息类型  0:消息（透传），1：通知
      * @param array $optional 可选参数,如果$pushType为单人，必须指定Channel::USER_ID(例:$optional[Channel::USER_ID] = 'xxx'),
 	 *		如果$pushType为tag，必须指定Channel::TAG,
 	 * 		如果$pushType为设备，必须指定Channel::DEVICE, Channel::DEVICE取值范围1-5，1：浏览器，2：PC, 3:Andriod, 4:iOS， 5:Windos Phone
 	 * 		其他可选参数：Channel::MSG_KEYS 发送的消息key，如果是数组格式，则会自动做json_encode，必须与$messages对应起来;
+	 *		Channel::MESSAGE_TYPE 消息类型，取值范围 0-1, 0:消息（透传），1：通知，默认为0
 	 *		还可指定Channel::MESSAGE_EXPIRES, Channel::MESSAGE_EXPIRES, Channel::CHANNLE_ID等
 	 *
 	 * @return 成功：PHP数组；失败:false
 	 * @version 2.0.0.0
 	*/
-	public function pushMessage($pushType, $messages, $message_type, $optional = NULL)
+	public function pushMessage($pushType, $messages,  $optional = NULL)
 	{
 		$this->_resetErrorStatus();
 		try
 		{
 			$tmpArgs = func_get_args();
-			$arrArgs = $this->_mergeArgs (array(self::PUSH_TYPE , self::MESSAGES, self::MESSAGE_TYPE), $tmpArgs);
+			$arrArgs = $this->_mergeArgs (array(self::PUSH_TYPE , self::MESSAGES), $tmpArgs);
 			$arrArgs[self::METHOD] = 'pushxmsg';
 
 			switch($pushType)
@@ -578,12 +578,12 @@ class Channel extends BaeBase
 
  
     /**
-     * createTag: 创建消息广播组
+     * createTag: 创建消息标签
      * 
      * 用户关注: 是
      *
      * @access public
-     * @param string $tagName 广播组名称
+     * @param string $tagName 标签名称
      * @param array $optional 可选参数，支持的可选参数包括 self::TAG_INFO
      * @return 成功: array; 失败: false
      * 
@@ -604,11 +604,11 @@ class Channel extends BaeBase
     }
     
     /**
-     * fetchTag: 查询广播组信息
+     * fetchTag: 查询消息标签信息
      * 
      * 用户关注: 是
      *
-     * @param int $tagId 广播组ID号
+     * @param int $tagId 标签ID号
      * @param array $optional
      * @return 成功：PHP数组；失败：false
      */
@@ -627,11 +627,11 @@ class Channel extends BaeBase
     }
     
     /**
-     * destroyTag: 删除广播组
+     * destroyTag: 删除消息标签
      * 
      * 用户关注: 是
      *
-     * @param int $tagId 广播组ID号
+     * @param int $tagId 消息标签ID号
      * @param array $optional
      * @return 成功：PHP数组；失败：false
      */
@@ -650,7 +650,7 @@ class Channel extends BaeBase
     }
     
     /**
-     * queryUserTag: 查询用户相关的广播组
+     * queryUserTag: 查询用户相关的标签
      * 
      * 用户关注: 是
      *
