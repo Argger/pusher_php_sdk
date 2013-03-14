@@ -124,23 +124,23 @@ class Channel extends BaeBase
     /**
      * 消息广播组名称
      * 
-     * @var string GROUP_NAME
+     * @var string TAG_NAME
      */
-    const GROUP_NAME = 'name';
+    const TAG_NAME = 'name';
     
     /**
      * 消息广播组描述
      * 
-     * @var stirng GROUP_INFO
+     * @var stirng TAG_INFO
      */
-    const GROUP_INFO = 'info';
+    const TAG_INFO = 'info';
     
     /**
      * 消息广播组id
      * 
-     * @var int GROUP_ID
+     * @var int TAG_ID
      */
-    const GROUP_ID = 'gid';
+    const TAG_ID = 'tid';
     
     /**
      * 封禁时间
@@ -201,7 +201,7 @@ class Channel extends BaeBase
         );
 
 	const PUSH_TO_USER = 1;
-	const PUSH_TO_GROUP = 2;
+	const PUSH_TO_TAG = 2;
 	const PUSH_TO_ALL = 3;
 	const PUSH_TO_DEVICE = 4;
 
@@ -506,301 +506,96 @@ class Channel extends BaeBase
 			return false; 
 		}
 	}
-	
+
+
 	/**
 	 * pushMessage
-	 * 
-	 * 用户关注：是
-	 * 
-	 * 根据userId、msgIds[、channelId]推送离线消息
-	 * 
+	 * 用户关注： 是
+	 * 根据pushType, messages, message_type, [optinal] 推送消息
 	 * @access public
-	 * @param string $userId 用户ID号
-	 * @param string $channelId 觕hannel的ID号
+	 * @param int $pushType 推送类型 取值范围 1-4, 1:单人，2：一群人tag， 3：所有人， 4：设备
 	 * @param string $messages 要发送的消息，如果是数组格式，则会自动做json_encode;如果是json格式给出，必须与$msgIds对应起来;
-	 * @param string $msgKeys 发送的消息key，如果是数组格式，则会自动做json_encode;如果是json字符串格式给出，必须与$messages对应起来;
-	 * @param array $optional 可选参数，支持的可选参数包括：Channel::MESSAGE_TYPE、Channel::MESSAGE_EXPIRES
-	 * @return 成功：PHP数组；失败：false
-	 * 
-	 * @version 1.0.0.0
-	 */
-	public function pushMessage ( $userId, $channelId, $messages, $msgKeys, $optional = NULL ) 
-	{
-		$this->_resetErrorStatus (  );
-		try 
-		{
-			$tmpArgs = func_get_args (  );
-			$arrArgs = $this->_mergeArgs ( array ( self::USER_ID, self::CHANNEL_ID, self::MESSAGES, self::MSG_KEYS ), $tmpArgs );
-			$arrArgs [ self::METHOD ] = 'pushmsg';
-			if(is_array($arrArgs [ self::MESSAGES ])) {
-				$arrArgs [ self::MESSAGES ] = json_encode($arrArgs [ self::MESSAGES ]);
-			}
-			if(is_array($arrArgs [ self::MSG_KEYS ])) {
-				$arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
-			}
-			return $this->_commonProcess ( $arrArgs );
-		} 
-		catch ( Exception $ex ) 
-		{
-			$this->_channelExceptionHandler ( $ex );
-			return false; 
-		}
-	}
-
-	/**
-	 * pushMessageToUser
-	 * 
-	 * 用户关注：是
-	 * 
-	 * 根据userId推送离线消息
-	 * 
-	 * @access public
-	 * @param string $userId 用户ID号
-	 * @param string $messages 要发送的消息，如果是数组格式，则会自动做json_encode;如果是json格式给出，必须与$msgIds对应起来;
-	 * @param string $msgKeys 发送的消息key，如果是数组格式，则会自动做json_encode;如果是json字符串格式给出，必须与$messages对应起来;
-	 * @param array $optional 可选参数，支持的可选参数包括：Channel::IOS_MESSAGES、Channel::WP_MESSAGES、Channel::DEVICE_TYPE、Channel::MESSAGE_TYPE、Channel::MESSAGE_EXPIRES
-	 * @return 成功：PHP数组；失败：false
-	 * 
-	 * @version 1.0.0.0
-	 */
-/*
-	public function pushMessageToUser ( $userId, $messages, $msgKeys, $optional = NULL ) 
-	{
-		$this->_resetErrorStatus (  );
-		try 
-		{
-			$tmpArgs = func_get_args (  );
-			$arrArgs = $this->_mergeArgs ( array ( self::USER_ID, self::MESSAGES, self::MSG_KEYS ), $tmpArgs );
-			$arrArgs [ self::METHOD ] = 'pushmsg_to_user';
-			if(is_array($arrArgs [ self::MESSAGES ])) {
-				$arrArgs [ self::MESSAGES ] = json_encode($arrArgs [ self::MESSAGES ]);
-			}
-			if(is_array($arrArgs [ self::MSG_KEYS ])) {
-				$arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
-			}
-			if(isset($arrArgs [ self::IOS_MESSAGES ]) && is_array($arrArgs [ self::IOS_MESSAGES ])) {
-				$msgs = array();
-				foreach ( $arrArgs[self::IOS_MESSAGES] as $message ) {
-					array_push($msgs, json_encode($message));
-				}
-				$arrArgs [ self::IOS_MESSAGES ] = json_encode($msgs);
-			}
-			if(isset($arrArgs [ self::WP_MESSAGES ]) && is_array($arrArgs [ self::WP_MESSAGES ])) {
-				$msgs = array();
-				foreach ( $arrArgs[self::WP_MESSAGES] as $message ) {
-					array_push($msgs, json_encode($message));
-				}
-				$arrArgs [ self::WP_MESSAGES ] = json_encode($msgs);
-			}
-			return $this->_commonProcess ( $arrArgs );
-		} 
-		catch ( Exception $ex ) 
-		{
-			$this->_channelExceptionHandler ( $ex );
-			return false; 
-		}
-	}
-*/
-//=================== add
-	public function pushMessageToUser($userId, $messages, $optional = NULL)
+	 * @param int $message_type 消息类型  0:消息（透传），1：通知
+     * @param array $optional 可选参数,如果$pushType为单人，必须指定Channel::USER_ID(例:$optional[Channel::USER_ID] = 'xxx'),
+	 *		如果$pushType为tag，必须指定Channel::TAG,
+	 * 		如果$pushType为设备，必须指定Channel::DEVICE, Channel::DEVICE取值范围1-5，1：浏览器，2：PC, 3:Andriod, 4:iOS， 5:Windos Phone
+	 * 		其他可选参数：Channel::MSG_KEYS 发送的消息key，如果是数组格式，则会自动做json_encode，必须与$messages对应起来;
+	 *		还可指定Channel::MESSAGE_EXPIRES, Channel::MESSAGE_EXPIRES, Channel::CHANNLE_ID等
+	 *
+	 * @return 成功：PHP数组；失败:false
+	 * @version 2.0.0.0
+	*/
+	public function pushMessage($pushType, $messages, $message_type, $optional = NULL)
 	{
 		$this->_resetErrorStatus();
 		try
 		{
 			$tmpArgs = func_get_args();
-			$arrArgs = $this->_mergeArgs ( array ( self::USER_ID, self::MESSAGES), $tmpArgs );
-			$arrArgs[self::METHOD] = 'pushmsg';
-			$arrArgs[self::PUSH_TYPE] = self::PUSH_TO_USER;
-			if(is_array($arrArgs [ self::MESSAGES ])) {
-				$arrArgs [ self::MESSAGES ] = json_encode($arrArgs [ self::MESSAGES ]);
-			}
-			if(is_array($arrArgs [ self::MSG_KEYS ])) {
-				$arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
-			}
-			return $this->_commonProcess ( $arrArgs );
-		} 
-		catch ( Exception $ex ) 
-		{
-			$this->_channelExceptionHandler ( $ex );
-			return false; 
-		}
-	}
+			$arrArgs = $this->_mergeArgs (array(self::PUSH_TYPE , self::MESSAGES, self::MESSAGE_TYPE), $tmpArgs);
+			$arrArgs[self::METHOD] = 'pushxmsg';
 
-	public function pushMessageToGroup($groupId, $messages, $optional = NULL)
-	{
-		$this->_resetErrorStatus();
-		try
-		{
-			$tmpArgs = func_get_args();
-			$arrArgs = $this->_mergeArgs ( array ( self::GROUP_ID, self::MESSAGES), $tmpArgs );
-			$arrArgs[self::METHOD] = 'pushmsg';
-			$arrArgs[self::PUSH_TYPE] = self::PUSH_TO_GROUP;
-			if(is_array($arrArgs [ self::MESSAGES ])) {
-				$arrArgs [ self::MESSAGES ] = json_encode($arrArgs [ self::MESSAGES ]);
-			}
-			if(is_array($arrArgs [ self::MSG_KEYS ])) {
-				$arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
-			}
-			return $this->_commonProcess ( $arrArgs );
-		} 
-		catch ( Exception $ex ) 
-		{
-			$this->_channelExceptionHandler ( $ex );
-			return false; 
-		}
-	}
-  
-	public function pushMessageToAll($messages, $optional = NULL)
-	{
-		$this->_resetErrorStatus();
-		try
-		{
-			$tmpArgs = func_get_args();
-			$arrArgs = $this->_mergeArgs ( array ( self::MESSAGES ), $tmpArgs );
-			$arrArgs[self::METHOD] = 'pushmsg';
-			$arrArgs[self::PUSH_TYPE] = self::PUSH_TO_ALL;
-			if(is_array($arrArgs [ self::MESSAGES ])) {
-				$arrArgs [ self::MESSAGES ] = json_encode($arrArgs [ self::MESSAGES ]);
-			}
-			if(is_array($arrArgs [ self::MSG_KEYS ])) {
-				$arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
-			}
-			return $this->_commonProcess ( $arrArgs );
-		} 
-		catch ( Exception $ex ) 
-		{
-			$this->_channelExceptionHandler ( $ex );
-			return false; 
-		}
- 	}
-
-	public function pushMessageToDevice($channel_id, $messages, $optional = NULL)
-	{
-		$this->_resetErrorStatus();
-		try
-		{
-			$tmpArgs = func_get_args();
-			$arrArgs = $this->_mergeArgs ( array ( self::CHANNEL_ID, self::MESSAGES), $tmpArgs );
-			$arrArgs[self::METHOD] = 'pushmsg';
-			$arrArgs[self::PUSH_TYPE] = self::PUSH_TO_DEVICE;
-			if(is_array($arrArgs [ self::MESSAGES ])) {
-				$arrArgs [ self::MESSAGES ] = json_encode($arrArgs [ self::MESSAGES ]);
-			}
-			if(is_array($arrArgs [ self::MSG_KEYS ])) {
-				$arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
-			}
-			return $this->_commonProcess ( $arrArgs );
-		} 
-		catch ( Exception $ex ) 
-		{
-			$this->_channelExceptionHandler ( $ex );
-			return false; 
-		}
-	}
-
-
-	/**
-	 * pushIosMessage
-	 * 
-	 * 用户关注：是
-	 * 
-	 * 根据userId、channelId、messages 推送消息，仅支持ios设备
-	 * 
-	 * @access public
-	 * @param string $userId 用户ID号
-	 * @param string $channelId 觕hannel的ID号
-	 * @param string $messages 要发送的消息，如果是数组格式，则会自动做json_encode
-	 * @param array $optional 可选参数，支持的可选参数包括 self::USER_TYPE
-	 * @return 成功：PHP数组；失败：false
-	 * 
-	 * @version 1.0.0.0
-	 */
-
-	public function pushIosMessage($userId, $channelId, $messages, $optional = NULL) 
-	{
-		
-		$this->_resetErrorStatus();
-		try 
-		{
-			$tmpArgs = func_get_args (  );
-			$arrArgs = $this->_mergeArgs ( array ( self::USER_ID, self::CHANNEL_ID, self::MESSAGES), $tmpArgs );
-			$arrArgs [ self::METHOD ] = 'push_ios_msg';
-			if(is_array($arrArgs [ self::MESSAGES ])) {
-				$msgs = array();
-				foreach ( $arrArgs[self::MESSAGES] as $message ) {
-					array_push($msgs, json_encode($message));
-				}
-				$arrArgs [ self::MESSAGES ] = json_encode($msgs);
-			}
-			return $this->_commonProcess ( $arrArgs );
-		} 
-		catch ( Exception $ex ) 
-		{
-			$this->_channelExceptionHandler ( $ex );
-			return false; 
-		}
-		
-	}
+			switch($pushType)
+			{
+				case self::PUSH_TO_USER:
+					if ( !array_key_exists(self::USER_ID, $arrArgs) || empty($arrArgs[self::USER_ID])){
+						throw new ChannelException("userId should be specified in optional[] when pushType is PUSH_TO_USER", self::CHANNEL_SDK_PARAM);
+					}
+					break;
 	
-	/**
-	 * pushWpMessage
-	 * 
-	 * 用户关注：是
-	 * 
-	 * 根据userId、channelId、messages 推送消息，仅支持windows phone设备
-	 * 
-	 * @access public
-	 * @param string $userId 用户ID号
-	 * @param string $channelId channel的ID号
-	 * @param string $messages 要发送的消息，如果是数组格式，则会自动做json_encode
-	 * @param array $optional 可选参数，支持的可选参数包括 self::USER_TYPE
-	 * @return 成功：PHP数组；失败：false
-	 * 
-	 * @version 1.0.0.0
-	 */
-	public function pushWpMessage($userId, $channelId, $messages, $optional = NULL) 
-	{
-		$this->_resetErrorStatus();
-		try 
-		{
-			$tmpArgs = func_get_args (  );
-			$arrArgs = $this->_mergeArgs ( array ( self::USER_ID, self::CHANNEL_ID, self::MESSAGES), $tmpArgs );
-			$arrArgs [ self::METHOD ] = 'push_wp_msg';
-			if(is_array($arrArgs [ self::MESSAGES ])) {
-				$msgs = array();
-				foreach ( $arrArgs[self::MESSAGES] as $message ) {
-					array_push($msgs, json_encode($message));
-				}
-				$arrArgs [ self::MESSAGES ] = json_encode($msgs);
+				case self::PUSH_TO_TAG:
+					if (!array_key_exists(self::TAG_ID, $arrArgs) || empty($arrArgs[self::TAG_ID])){
+						throw new ChannelException("tag should be specified in optional[] when pushType is PUSH_TO_TAG", self::CHANNEL_SDK_PARAM);
+					}
+					break;
+		
+				case self::PUSH_TO_ALL:
+					break;
+
+				case self::PUSH_TO_DEVICE:
+					if (!array_key_exists(self::CHANNEL_ID, $arrArgs)){
+						throw new ChannelException("channelId should be specified in optional[] when pushType is PUSH_TO_DEVICE", self::CHANNEL_SDK_PARAM);
+					}
+					break;
+				default:
+					throw new ChannelException("pushType value is not supported or not specified", self::CHANNEL_SDK_PARAM);
 			}
-			return $this->_commonProcess ( $arrArgs );
-		} 
-		catch ( Exception $ex ) 
-		{
-			$this->_channelExceptionHandler ( $ex );
-			return false; 
+
+			$arrArgs[self::PUSH_TYPE] = $pushType;
+			if(is_array($arrArgs [ self::MESSAGES ])) {
+                $arrArgs [ self::MESSAGES ] = json_encode($arrArgs [ self::MESSAGES ]);
+            }
+            if(is_array($arrArgs [ self::MSG_KEYS ])) {
+                $arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
+            }
+            return $this->_commonProcess ( $arrArgs );
 		}
-	}	
+		catch (Exception $ex)
+		{
+			$this->_channelExceptionHandler( $ex );
+			return false;
+		}
+	}
+
  
     /**
-     * createGroup: 创建消息广播组
+     * createTag: 创建消息广播组
      * 
      * 用户关注: 是
      *
      * @access public
-     * @param string $groupName 广播组名称
-     * @param array $optional 可选参数，支持的可选参数包括 self::GROUP_INFO
+     * @param string $tagName 广播组名称
+     * @param array $optional 可选参数，支持的可选参数包括 self::TAG_INFO
      * @return 成功: array; 失败: false
      * 
      * @version 1.0.0.0
      */
-    public function createGroup($groupName, $optional = null)
+    public function createTag($tagName, $optional = null)
     {
         $this->_resetErrorStatus();
         try {
             $tmpArgs = func_get_args();
-            $arrArgs = $this->_mergeArgs(array(self::GROUP_NAME), $tmpArgs);
-            $arrArgs[self::METHOD] = 'create_group';
+            $arrArgs = $this->_mergeArgs(array(self::TAG_NAME), $tmpArgs);
+            $arrArgs[self::METHOD] = 'create_tag';
             return $this->_commonProcess($arrArgs);
         } catch (Exception $ex) {
             $this->_channelExceptionHandler($ex);
@@ -809,21 +604,21 @@ class Channel extends BaeBase
     }
     
     /**
-     * queryGroup: 查询广播组信息
+     * fetchTag: 查询广播组信息
      * 
      * 用户关注: 是
      *
-     * @param int $groupId 广播组ID号
+     * @param int $tagId 广播组ID号
      * @param array $optional
      * @return 成功：PHP数组；失败：false
      */
-    public function queryGroup($groupId, $optional = null)
+    public function fetchTag($tagId, $optional = null)
     {
         $this->_resetErrorStatus();
         try {
             $tmpArgs = func_get_args();
-            $arrArgs = $this->_mergeArgs(array(self::GROUP_ID), $tmpArgs);
-            $arrArgs[self::METHOD] = 'query_group';
+            $arrArgs = $this->_mergeArgs(array(self::TAG_ID), $tmpArgs);
+            $arrArgs[self::METHOD] = 'fetch_tag';
             return $this->_commonProcess($arrArgs);
         } catch (Exception $ex) {
             $this->_channelExceptionHandler($ex);
@@ -832,21 +627,21 @@ class Channel extends BaeBase
     }
     
     /**
-     * destroyGroup: 删除广播组
+     * destroyTag: 删除广播组
      * 
      * 用户关注: 是
      *
-     * @param int $groupId 广播组ID号
+     * @param int $tagId 广播组ID号
      * @param array $optional
      * @return 成功：PHP数组；失败：false
      */
-    public function destroyGroup($groupId, $optional = null)
+    public function destroyTag($tagId, $optional = null)
     {
         $this->_resetErrorStatus();
         try {
             $tmpArgs = func_get_args();
-            $arrArgs = $this->_mergeArgs(array(self::GROUP_ID), $tmpArgs);
-            $arrArgs[self::METHOD] = 'destroy_group';
+            $arrArgs = $this->_mergeArgs(array(self::TAG_ID), $tmpArgs);
+            $arrArgs[self::METHOD] = 'destroy_tag';
             return $this->_commonProcess($arrArgs);
         } catch (Exception $ex) {
             $this->_channelExceptionHandler($ex);
@@ -855,7 +650,7 @@ class Channel extends BaeBase
     }
     
     /**
-     * queryUserGroup: 查询用户相关的广播组
+     * queryUserTag: 查询用户相关的广播组
      * 
      * 用户关注: 是
      *
@@ -863,13 +658,13 @@ class Channel extends BaeBase
      * @param array $optional
      * @return 成功：PHP数组；失败：false 
      */
-    public function queryUserGroup($userId, $optional = null)
+    public function queryUserTag($userId, $optional = null)
     {
         $this->_resetErrorStatus();
         try {
             $tmpArgs = func_get_args();
             $arrArgs = $this->_mergeArgs(array(self::USER_ID), $tmpArgs);
-            $arrArgs[self::METHOD] = 'query_user_group';
+            $arrArgs[self::METHOD] = 'query_user_tag';
             return $this->_commonProcess($arrArgs);
         } catch (Exception $ex) {
             $this->_channelExceptionHandler($ex);
@@ -877,106 +672,7 @@ class Channel extends BaeBase
         }
     }
     
-    /**
-     * pushGroupMsg: 向广播组推送消息
-     * 
-     * 用户关注: 是
-     *
-	 * @param string $messages 要发送的消息，如果是数组格式，则会自动做json_encode;如果是json格式给出，必须与$msgIds对应起来;
-	 * @param string $msgKeys 发送的消息key，如果是数组格式，则会自动做json_encode;如果是json字符串格式给出，必须与$messages对应起来;
-     * @param array $optional可选参数，支持的可选参数包括 self::GROUP_ID, self::MESSAGE_EXPIRES
-     * @return 成功：PHP数组；失败：false 
-     */
-    public function pushGroupMsg($messages, $msgKeys, $deviceType, $optional = null)
-    {
-        $this->_resetErrorStatus();
-        try {
-            $tmpArgs = func_get_args();
-            $arrArgs = $this->_mergeArgs(array(self::MESSAGES, self::MSG_KEYS, self::DEVICE_TYPE), $tmpArgs);
-            $arrArgs[self::METHOD] = 'push_group_msg';
-        	if(is_array($arrArgs [ self::MESSAGES ])) {
-				$arrArgs [ self::MESSAGES ] = json_encode($arrArgs [ self::MESSAGES ]);
-			}
-			if(is_array($arrArgs [ self::MSG_KEYS ])) {
-				$arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
-			}
-            return $this->_commonProcess($arrArgs);
-        } catch (Exception $ex) {
-            $this->_channelExceptionHandler($ex);
-            return false;
-        }
-    }
     
-    /**
-     * fetchGroupMsg: 查询用户广播组消息
-     * 
-     * 用户关注: 是
-     *
-     * @param array $optional可选参数，支持的可选参数包括 self::USER_ID, self::CHANNEL_ID, self::GROUP_ID, self::PAGENO, self::LIMIT
-     * @return 成功：PHP数组；失败：false 
-     */
-    public function fetchGroupMsg($optional = null)
-    {
-        $this->_resetErrorStatus();
-        try {
-            $tmpArgs = func_get_args();
-            $arrArgs = $this->_mergeArgs(array(), $tmpArgs);
-            $arrArgs[self::METHOD] = 'fetch_group_msg';
-            return $this->_commonProcess($arrArgs);
-        } catch (Exception $ex) {
-            $this->_channelExceptionHandler($ex);
-            return false;
-        }
-    }
-    
-    /**
-     * fetchGroupMsgcount: 查询用户广播组消息个数
-     * 
-     * 用户关注: 是
-     *
-     * @param array $optional可选参数，支持的可选参数包括 self::USER_ID, self::CHANNEL_ID, self::GROUP_ID
-     * @return 成功：PHP数组；失败：false 
-     */
-    public function fetchGroupMsgcount($optional = null)
-    {
-        $this->_resetErrorStatus();
-        try {
-            $tmpArgs = func_get_args();
-            $arrArgs = $this->_mergeArgs(array(), $tmpArgs);
-            $arrArgs[self::METHOD] = 'fetch_group_msgcount';
-            return $this->_commonProcess($arrArgs);
-        } catch (Exception $ex) {
-            $this->_channelExceptionHandler($ex);
-            return false;
-        }
-    }
-    
-    /**
-     * deleteGroupMsg: 删除广播组消息
-     * 
-     * 用户关注: 是
-     *
-     * @param json string $msgIds,如果是数组格式，则会自动做json_encode;
-     * @param array $optional可选参数，支持的可选参数包括 self::GROUP_ID
-     * @return 成功：PHP数组；失败：false  
-     */
-    public function deleteGroupMsg($msgIds, $optional = null)
-    {
-        $this->_resetErrorStatus();
-        try {
-            $tmpArgs = func_get_args();
-            $arrArgs = $this->_mergeArgs(array(self::MSG_IDS), $tmpArgs);
-            $arrArgs[self::METHOD] = 'delete_group_msg';
-        	if(is_array($arrArgs [ self::MSG_IDS ])) {
-				$arrArgs [ self::MSG_IDS ] = json_encode($arrArgs [ self::MSG_IDS ]);
-			}
-            return $this->_commonProcess($arrArgs);
-        } catch (Exception $ex) {
-            $this->_channelExceptionHandler($ex);
-            return false;
-        }
-    }
-
 
 	/**
 	 * initAppIoscert: 初始化应用ios证书
@@ -1069,125 +765,6 @@ class Channel extends BaeBase
 		}
 	}
 	
-	/**
-	 * pushAndroidMessage
-	 * 
-	 * 用户关注：是
-	 * 
-	 * 根据userId、channelId推送离线消息，仅支持android设备
-	 * 
-	 * @access public
-	 * @param string $userId 用户ID号
-	 * @param string $channelId 用户channel的ID号
-	 * @param string $messages 要发送的消息，如果是数组格式，则会自动做json_encode;如果是json格式给出，必须与$msgIds对应起来;
-	 * @param string $msgKeys 发送的消息key，如果是数组格式，则会自动做json_encode;如果是json字符串格式给出，必须与$messages对应起来;
-	 * @param array $optional 可选参数，支持的可选参数包括：Channel::MESSAGE_TYPE、Channel::MESSAGE_EXPIRES
-	 * @return 成功：PHP数组；失败：false
-	 * 
-	 * @version 1.0.0.0
-	 */
-	public function pushAndroidMessage ( $userId, $channelId, $messages, $msgKeys, $optional = NULL ) 
-	{
-		$this->_resetErrorStatus (  );
-		try 
-		{
-			$tmpArgs = func_get_args (  );
-			$arrArgs = $this->_mergeArgs ( array ( self::USER_ID, self::CHANNEL_ID, self::MESSAGES, self::MSG_KEYS ), $tmpArgs );
-			$arrArgs [ self::METHOD ] = 'push_android_msg';
-			if(is_array($arrArgs [ self::MESSAGES ])) {
-				$arrArgs [ self::MESSAGES ] = json_encode($arrArgs [ self::MESSAGES ]);
-			}
-			if(is_array($arrArgs [ self::MSG_KEYS ])) {
-				$arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
-			}
-			return $this->_commonProcess ( $arrArgs );
-		} 
-		catch ( Exception $ex ) 
-		{
-			$this->_channelExceptionHandler ( $ex );
-			return false; 
-		}
-	}
-	
-	/**
-	 * pushBrowserMessage
-	 * 
-	 * 用户关注：是
-	 * 
-	 * 根据userId、channelId推送离线消息，仅支持browser设备
-	 * 
-	 * @access public
-	 * @param string $userId 用户ID号
-	 * @param string $channelId 用户channel的ID号
-	 * @param string $messages 要发送的消息，如果是数组格式，则会自动做json_encode;如果是json格式给出，必须与$msgIds对应起来;
-	 * @param string $msgKeys 发送的消息key，如果是数组格式，则会自动做json_encode;如果是json字符串格式给出，必须与$messages对应起来;
-	 * @param array $optional 可选参数，支持的可选参数包括：Channel::MESSAGE_TYPE、Channel::MESSAGE_EXPIRES
-	 * @return 成功：PHP数组；失败：false
-	 * 
-	 * @version 1.0.0.0
-	 */
-	public function pushBrowserMessage ( $userId, $channelId, $messages, $msgKeys, $optional = NULL ) 
-	{
-		$this->_resetErrorStatus (  );
-		try 
-		{
-			$tmpArgs = func_get_args (  );
-			$arrArgs = $this->_mergeArgs ( array ( self::USER_ID, self::CHANNEL_ID, self::MESSAGES, self::MSG_KEYS ), $tmpArgs );
-			$arrArgs [ self::METHOD ] = 'push_browser_msg';
-			if(is_array($arrArgs [ self::MESSAGES ])) {
-				$arrArgs [ self::MESSAGES ] = json_encode($arrArgs [ self::MESSAGES ]);
-			}
-			if(is_array($arrArgs [ self::MSG_KEYS ])) {
-				$arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
-			}
-			return $this->_commonProcess ( $arrArgs );
-		} 
-		catch ( Exception $ex ) 
-		{
-			$this->_channelExceptionHandler ( $ex );
-			return false; 
-		}
-	}
-	
-	/**
-	 * pushPcMessage
-	 * 
-	 * 用户关注：是
-	 * 
-	 * 根据userId、channelId推送离线消息，仅支持pc设备
-	 * 
-	 * @access public
-	 * @param string $userId 用户ID号
-	 * @param string $channelId 用户channel的ID号
-	 * @param string $messages 要发送的消息，如果是数组格式，则会自动做json_encode;如果是json格式给出，必须与$msgIds对应起来;
-	 * @param string $msgKeys 发送的消息key，如果是数组格式，则会自动做json_encode;如果是json字符串格式给出，必须与$messages对应起来;
-	 * @param array $optional 可选参数，支持的可选参数包括：Channel::MESSAGE_TYPE、Channel::MESSAGE_EXPIRES
-	 * @return 成功：PHP数组；失败：false
-	 * 
-	 * @version 1.0.0.0
-	 */
-	public function pushPcMessage ( $userId, $channelId, $messages, $msgKeys, $optional = NULL ) 
-	{
-		$this->_resetErrorStatus (  );
-		try 
-		{
-			$tmpArgs = func_get_args (  );
-			$arrArgs = $this->_mergeArgs ( array ( self::USER_ID, self::CHANNEL_ID, self::MESSAGES, self::MSG_KEYS ), $tmpArgs );
-			$arrArgs [ self::METHOD ] = 'push_pc_msg';
-			if(is_array($arrArgs [ self::MESSAGES ])) {
-				$arrArgs [ self::MESSAGES ] = json_encode($arrArgs [ self::MESSAGES ]);
-			}
-			if(is_array($arrArgs [ self::MSG_KEYS ])) {
-				$arrArgs [ self::MSG_KEYS ] = json_encode($arrArgs [ self::MSG_KEYS ]);
-			}
-			return $this->_commonProcess ( $arrArgs );
-		} 
-		catch ( Exception $ex ) 
-		{
-			$this->_channelExceptionHandler ( $ex );
-			return false; 
-		}
-	}
 	
 	/**
 	 * queryDeviceType
