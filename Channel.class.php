@@ -170,7 +170,7 @@ class Channel extends BaeBase
 	 */
 	const APPID = 'appid';
 	const ACCESS_TOKEN = 'access_token';
-	const ACCESS_KEY = 'access_key';
+	const API_KEY = 'api_key';
 	const SECRET_KEY = 'secret_key';
 	const SIGN = 'sign';
 	const METHOD = 'method';
@@ -192,7 +192,7 @@ class Channel extends BaeBase
 	 * 
 	 * 用户关注：否
 	 */
-	protected $_accessKey = NULL;
+	protected $_apiKey = NULL;
 	protected $_secretKey = NULL;
 	protected $_requestId = 0;
 	protected $_curlOpts = array(
@@ -250,7 +250,7 @@ class Channel extends BaeBase
 		{
 			if ( $this->_checkString ( $accessKey, 1, 64 ) )
 			{
-				$this->_accessKey = $accessKey;
+				$this->_apiKey = $accessKey;
 			}
 			else 
 			{
@@ -798,7 +798,7 @@ class Channel extends BaeBase
 
 	public function __construct ($accessKey = NULL, $secretKey = NULL, $arr_curlOpts = array())
     {
-        $this->_accessKey = $accessKey;
+        $this->_apiKey = $accessKey;
 		$this->_secretKey = $secretkey;
 
         if (!is_array($arr_curlOpts)) {
@@ -932,10 +932,10 @@ class Channel extends BaeBase
 		$this->_getKey($opt, self::HOST, null, 'g_host',
                 'HTTP_BAE_ENV_ADDR_CHANNEL', 1, 1024);
 
-        $this->_getKey($opt, self::ACCESS_KEY, $this->_accessKey,
-                'g_accessKey', 'HTTP_BAE_ENV_AK', 1, 64, false);	
+        $this->_getKey($opt, self::API_KEY, $this->_apiKey,
+                'g_apiKey', 'HTTP_BAE_ENV_AK', 1, 64, false);	
 		//$opt[self::HOST] = self::DEFAULT_HOST; 
-		//$opt[self::ACCESS_KEY] = $this->_accessKey;
+		//$opt[self::API_KEY] = $this->_apiKey;
         
 		if (isset($opt[self::SECRET_KEY])) {
 			unset($opt[self::SECRET_KEY]);
