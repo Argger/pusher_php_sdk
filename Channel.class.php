@@ -170,7 +170,7 @@ class Channel extends BaeBase
 	 */
 	const APPID = 'appid';
 	const ACCESS_TOKEN = 'access_token';
-	const API_KEY = 'api_key';
+	const API_KEY = 'apikey';
 	const SECRET_KEY = 'secret_key';
 	const SIGN = 'sign';
 	const METHOD = 'method';
@@ -179,7 +179,8 @@ class Channel extends BaeBase
 	const MESSAGES = 'messages';
 	const PRODUCT = 'channel';
 	
-	const DEFAULT_HOST = 'localhost:1234';//'channel.api.duapp.com';
+	const DEFAULT_HOST = '10.23.248.79:8050';//'channel.api.duapp.com';
+//	const DEFAULT_HOST = 'localhost:1234';//'channel.api.duapp.com';
 	const NAME = "name";
 	const DESCRIPTION = "description";
 	const CERT = "cert"; 
@@ -612,12 +613,12 @@ class Channel extends BaeBase
      * @param array $optional
      * @return 成功：PHP数组；失败：false
      */
-    public function fetchTag($tagId, $optional = null)
+    public function fetchTag($optional = null)
     {
         $this->_resetErrorStatus();
         try {
             $tmpArgs = func_get_args();
-            $arrArgs = $this->_mergeArgs(array(self::TAG_ID), $tmpArgs);
+            $arrArgs = $this->_mergeArgs(null, $tmpArgs);
             $arrArgs[self::METHOD] = 'fetch_tag';
             return $this->_commonProcess($arrArgs);
         } catch (Exception $ex) {
@@ -635,12 +636,12 @@ class Channel extends BaeBase
      * @param array $optional
      * @return 成功：PHP数组；失败：false
      */
-    public function destroyTag($tagId, $optional = null)
+    public function destroyTag($tagName, $optional = null)
     {
         $this->_resetErrorStatus();
         try {
             $tmpArgs = func_get_args();
-            $arrArgs = $this->_mergeArgs(array(self::TAG_ID), $tmpArgs);
+            $arrArgs = $this->_mergeArgs(array(self::NAME), $tmpArgs);
             $arrArgs[self::METHOD] = 'destroy_tag';
             return $this->_commonProcess($arrArgs);
         } catch (Exception $ex) {
@@ -658,13 +659,13 @@ class Channel extends BaeBase
      * @param array $optional
      * @return 成功：PHP数组；失败：false 
      */
-    public function queryUserTag($userId, $optional = null)
+    public function queryUserTags($userId, $optional = null)
     {
         $this->_resetErrorStatus();
         try {
             $tmpArgs = func_get_args();
             $arrArgs = $this->_mergeArgs(array(self::USER_ID), $tmpArgs);
-            $arrArgs[self::METHOD] = 'query_user_tag';
+            $arrArgs[self::METHOD] = 'query_user_tags';
             return $this->_commonProcess($arrArgs);
         } catch (Exception $ex) {
             $this->_channelExceptionHandler($ex);
@@ -799,7 +800,7 @@ class Channel extends BaeBase
 	public function __construct ($accessKey = NULL, $secretKey = NULL, $arr_curlOpts = array())
     {
         $this->_apiKey = $accessKey;
-		$this->_secretKey = $secretkey;
+		$this->_secretKey = $secretKey;
 
         if (!is_array($arr_curlOpts)) {
             throw new ChannelException('invalid param - arr_curlopt is not an array ['
