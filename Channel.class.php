@@ -84,11 +84,11 @@ class Channel extends BaeBase
 	/**
 	 * 第几页
 	 * 
-	 * 批量查询时，需要指定pageno，默认为第0页
+	 * 批量查询时，需要指定start，默认为第0页
 	 * 
-	 * @var int PAGENO
+	 * @var int START
 	 */
-	const PAGENO = 'pageno';
+	const START = 'start';
 	/**
 	 * 每页多少条记录
 	 * 
@@ -126,7 +126,7 @@ class Channel extends BaeBase
      * 
      * @var string TAG_NAME
      */
-    const TAG_NAME = 'name';
+    const TAG_NAME = 'tag';
     
     /**
      * 消息标签描述
@@ -358,7 +358,7 @@ class Channel extends BaeBase
 	 * 
 	 * @access public
 	 * @param string $userId 用户ID号
-	 * @param array $optional 可选参数，支持的可选参数包括：Channel::CHANNEL_ID、Channel::DEVICE_TYPE、Channel::PAGENO、Channel::LIMIT
+	 * @param array $optional 可选参数，支持的可选参数包括：Channel::CHANNEL_ID、Channel::DEVICE_TYPE、Channel::START、Channel::LIMIT
 	 * @return 成功：PHP数组；失败：false
 	 * 
 	 * @version 1.0.0.0
@@ -420,7 +420,7 @@ class Channel extends BaeBase
 	 * 
 	 * @access public
 	 * @param string $userId 用户ID号
-	 * @param array $optional 可选参数，支持的可选参数包括：Channel::CHANNEL_ID、Channel::PAGENO、Channel::LIMIT
+	 * @param array $optional 可选参数，支持的可选参数包括：Channel::CHANNEL_ID、Channel::START、Channel::LIMIT
 	 * @return 成功：PHP数组；失败：false
 	 * 
 	 * @version 1.0.0.0
@@ -526,13 +526,13 @@ class Channel extends BaeBase
 	 * @return 成功：PHP数组；失败:false
 	 * @version 2.0.0.0
 	*/
-	public function pushMessage($pushType, $messages,  $optional = NULL)
+	public function pushMessage($pushType, $messages, $msgKeys, $optional = NULL)
 	{
 		$this->_resetErrorStatus();
 		try
 		{
 			$tmpArgs = func_get_args();
-			$arrArgs = $this->_mergeArgs (array(self::PUSH_TYPE , self::MESSAGES), $tmpArgs);
+			$arrArgs = $this->_mergeArgs (array(self::PUSH_TYPE , self::MESSAGES, self::MSG_KEYS), $tmpArgs);
 			$arrArgs[self::METHOD] = 'pushxmsg';
 
 			switch($pushType)
@@ -544,7 +544,7 @@ class Channel extends BaeBase
 					break;
 	
 				case self::PUSH_TO_TAG:
-					if (!array_key_exists(self::TAG_ID, $arrArgs) || empty($arrArgs[self::TAG_ID])){
+					if (!array_key_exists(self::TAG_NAME, $arrArgs) || empty($arrArgs[self::TAG_NAME])){
 						throw new ChannelException("tag should be specified in optional[] when pushType is PUSH_TO_TAG", self::CHANNEL_SDK_PARAM);
 					}
 					break;
@@ -1017,7 +1017,7 @@ class Channel extends BaeBase
 		$request->set_method($http_method);
 		$request->set_body($content);
 		if (is_array($this->_curlOpts)) {
-			$request->set_curlOpts($this->_curlOpts);
+			$request->set_curlopts($this->_curlOpts);
 		}
 		$request->send_request();
 		return new ResponseCore($request->get_response_header(),
