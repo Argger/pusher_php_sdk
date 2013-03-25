@@ -350,7 +350,7 @@ class Channel extends BaeBase
 	}
 	
 	/**
-	 * bindList
+	 * queryBindList
 	 * 
 	 * 用户关注：是
 	 * 
